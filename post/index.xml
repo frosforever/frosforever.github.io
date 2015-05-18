@@ -2,19 +2,19 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on My New Hugo Site</title>
-    <link>http://yourSiteHere/post/</link>
+    <link>http://frosforever.github.io/post/</link>
     <description>Recent content in Posts on My New Hugo Site</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 18 May 2015 17:49:00 -0400</lastBuildDate>
-    <atom:link href="http://yourSiteHere/post/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://frosforever.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>test</title>
-      <link>http://yoursitehere/post/test/</link>
+      <link>http://frosforever.github.io/post/test/</link>
       <pubDate>Mon, 18 May 2015 17:49:00 -0400</pubDate>
       
-      <guid>http://yoursitehere/post/test/</guid>
+      <guid>http://frosforever.github.io/post/test/</guid>
       <description>&lt;p&gt;Your live on Github Pages&lt;/p&gt;
 </description>
     </item>
