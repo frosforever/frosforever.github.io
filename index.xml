@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>My New Hugo Site</title>
+    <title>My New Hugo Site - Test</title>
     <link>http://frosforever.github.io/</link>
-    <description>Recent content on My New Hugo Site</description>
+    <description>Recent content on My New Hugo Site - Test</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 18 May 2015 17:49:00 -0400</lastBuildDate>
