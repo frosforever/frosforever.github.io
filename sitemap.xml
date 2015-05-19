@@ -3,12 +3,17 @@
   
   <url>
     <loc>https://frosforever.github.io/</loc>
-    <lastmod>2015-05-18T17:49:00-04:00</lastmod>
+    <lastmod>2015-05-18T20:35:20-04:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://frosforever.github.io/blog/2015/05/18/test/</loc>
+    <loc>https://frosforever.github.io/license/</loc>
+    <lastmod>2015-05-18T20:35:20-04:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://frosforever.github.io/blog/2015/05/18/serialization-of-unit-in-akka/</loc>
     <lastmod>2015-05-18T17:49:00-04:00</lastmod>
   </url>
   

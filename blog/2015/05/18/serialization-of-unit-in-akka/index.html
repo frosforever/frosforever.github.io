@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>Serialization of Unit in akka &middot; Yosef Fertel</title>
+
+  
+  <link rel="stylesheet" href="https://frosforever.github.io//css/poole.css">
+  <link rel="stylesheet" href="https://frosforever.github.io//css/hyde.css">
+  <link rel="stylesheet" href="https://frosforever.github.io//css/poole-overrides.css">
+  <link rel="stylesheet" href="https://frosforever.github.io//css/hyde-overrides.css">
+  <link rel="stylesheet" href="https://frosforever.github.io//css/hyde-x.css">
+  <link rel="stylesheet" href="https://frosforever.github.io//css/highlight/solarized_dark.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link href="/favicon.png" rel="icon">
+
+  
+  
+  
+  
+
+  <meta name="description" content="Why one should favor () over Unit with Akka">
+  <meta name="keywords" content="">
+  
+</head>
+<body>
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      
+      <h1>Yosef Fertel</h1>
+      <p class="lead"><p>Thoughts and notes</p>
+</p>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav-item"><a href="https://frosforever.github.io//">Blog</a></li>
+      
+    </ul>
+
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav-item">
+      <a href="https://github.com/frosforever"><i class="fa fa-github-square fa-3x"></i></a>
+      
+      <a href="https://www.linkedin.com/in/yfertel"><i class="fa fa-linkedin-square fa-3x"></i></a>
+      
+      
+      
+      </li>
+    </ul>
+
+    <p>Copyright &copy; 2015 <a href="https://frosforever.github.io//license">License</a><br/>
+       Powered by <a href="http://gohugo.io">Hugo</a> and <a href="https://github.com/zyro/hyde-x">Hyde-X</a></p>
+  </div>
+</div>
+
+
+<div class="content container">
+  <div class="post">
+    <h1>Serialization of Unit in akka</h1>
+    <span class="post-date">May 18, 2015 &middot; 2 minute read
+    </span>
+    
+
+<p>A common mistake in scala is using <code>Unit</code>, the companion object, as its value. The correct value of type <code>Unit</code> is <code>()</code>. Typically, one can get away with using <code>Unit</code> as the value, and</p>
+
+<pre><code class="language-scala">def unitType: Unit = Unit
+
+def unitValue: Unit = ()
+</code></pre>
+
+<p>behave similarly. However, this becomes an issue when serialization<sup><a href="#myfootnote1">1</a></sup> comes into play. Take, for example, the following actor<sup><a href="#myfootnote2">2</a></sup>:</p>
+
+<pre><code class="language-scala">class UnitActor extends Actor {
+  override def receive: Receive = {
+    case Unit =&gt; sender ! &quot;Received Unit Object&quot;
+    case () =&gt; sender ! &quot;Received Unit value&quot;
+  }
+}
+</code></pre>
+
+<p>This simply returns a string to the sender upon receipt of a message. When run on the same VM, everything behaves as expected:</p>
+
+<pre><code class="language-scala">class NoSerializableTest extends TestKit(ActorSystem(&quot;SerializableTest&quot;)) with WordSpecLike with ImplicitSender {
+
+  &quot;ActorSystem without requiring serialization&quot; should {
+    val unitActor = TestActorRef[UnitActor]
+
+    &quot;send Unit object&quot; in {
+      unitActor ! Unit
+      within(1 second){
+        expectMsg(&quot;Received Unit Object&quot;)
+      }
+    }
+    &quot;send unit value&quot; in {
+      unitActor ! ()
+      within(1 second){
+        expectMsg(&quot;Received Unit value&quot;)
+      }
+    }
+  }
+}
+</code></pre>
+
+<p>However, if the same actor was used in a distributed system, messages would have to be serialized and <code>Unit</code> messages will not be sent across the wire.</p>
+
+<pre><code class="language-scala">class SerializableTest extends TestKit(ActorSystem(&quot;SerializableTest&quot;, ConfigFactory.parseString(
+  &quot;akka.actor.serialize-messages = on&quot;))) with WordSpecLike with ImplicitSender {
+
+  &quot;ActorSystem with serialization&quot; should {
+    val unitActor = TestActorRef[UnitActor]
+
+    &quot;fail to send Unit Object&quot; in {
+      unitActor ! Unit
+      within(1 second){
+        expectNoMsg()
+      }
+    }
+    &quot;send unit value&quot; in {
+      unitActor ! ()
+      within(1 second){
+        expectMsg(&quot;Received Unit value&quot;)
+      }
+    }
+  }
+}
+</code></pre>
+
+<p>Note that we have mimicked what would happen when messages are sent between VMs by setting <code>akka.actor.serialize-messages = on</code><sup><a href="#myfootnote3">3</a></sup>. Using the default java serializer, <code>()</code> messages are sent without a problem, but <code>Unit</code> messages are dropped with the following error being logged to STDOUT:</p>
+
+<pre><code>[ERROR] [05/17/2015 14:37:30.959] [pool-6-thread-3-ScalaTest-running-SerializableTest] [akka://SerializableTest/user/$$a] swallowing exception during message send
+java.io.NotSerializableException: No configured serialization-bindings for class [scala.Unit$]
+</code></pre>
+
+<p><code>Unit</code> is just a regular companion object and plain objects are not serializable, only <code>case objects</code> are.</p>
+
+<h1 id="take-aways:22b3ccc225764a0214716b110e2fce4d">Take aways:</h1>
+
+<ul>
+<li>Use <code>()</code> as the <code>Unit</code> value and not <code>Unit</code> itself.</li>
+<li>Turn on <code>serialize-messages</code> when testing actor systems that will leave a single VM.</li>
+</ul>
+
+<h1 id="footnotes:22b3ccc225764a0214716b110e2fce4d">Footnotes:</h1>
+
+<p><a name="myfootnote1">1</a>: Using the default java serializer. Other serializers&rsquo; behavior is left as an exercise to the reader.<br>
+<a name="myfootnote2">2</a>: Code for tests can be found <a href="https://github.com/frosforever/akka-unit-messages">https://github.com/frosforever/akka-unit-messages</a><br>
+<a name="myfootnote3">3</a>: <a href="http://doc.akka.io/docs/akka/snapshot/scala/serialization.html#Verification">http://doc.akka.io/docs/akka/snapshot/scala/serialization.html#Verification</a> <br></p>
+
+  </div>
+  
+</div>
+
+
+
+
+<script src="https://frosforever.github.io//js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+</body>
+</html>

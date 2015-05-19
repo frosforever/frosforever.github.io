@@ -1,21 +1,116 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Something else</title>
+    <title>Thoughts and notes</title>
     <link>https://frosforever.github.io/</link>
-    <description>Recent content on Something else</description>
+    <description>Recent content on Thoughts and notes</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 18 May 2015 17:49:00 -0400</lastBuildDate>
+    <lastBuildDate>Mon, 18 May 2015 20:35:20 -0400</lastBuildDate>
     <atom:link href="https://frosforever.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
-      <title>test</title>
-      <link>https://frosforever.github.io/blog/2015/05/18/test/</link>
+      <title>License</title>
+      <link>https://frosforever.github.io/license/</link>
+      <pubDate>Mon, 18 May 2015 20:35:20 -0400</pubDate>
+      
+      <guid>https://frosforever.github.io/license/</guid>
+      <description>&lt;p&gt;Anything here is my opinion. Use it however you please, but do not hold me responsible for any mishaps.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Serialization of Unit in akka</title>
+      <link>https://frosforever.github.io/blog/2015/05/18/serialization-of-unit-in-akka/</link>
       <pubDate>Mon, 18 May 2015 17:49:00 -0400</pubDate>
       
-      <guid>https://frosforever.github.io/blog/2015/05/18/test/</guid>
-      <description>&lt;p&gt;Your live on Github Pages&lt;/p&gt;
+      <guid>https://frosforever.github.io/blog/2015/05/18/serialization-of-unit-in-akka/</guid>
+      <description>
+
+&lt;p&gt;A common mistake in scala is using &lt;code&gt;Unit&lt;/code&gt;, the companion object, as its value. The correct value of type &lt;code&gt;Unit&lt;/code&gt; is &lt;code&gt;()&lt;/code&gt;. Typically, one can get away with using &lt;code&gt;Unit&lt;/code&gt; as the value, and&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-scala&#34;&gt;def unitType: Unit = Unit
+
+def unitValue: Unit = ()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;behave similarly. However, this becomes an issue when serialization&lt;sup&gt;&lt;a href=&#34;#myfootnote1&#34;&gt;1&lt;/a&gt;&lt;/sup&gt; comes into play. Take, for example, the following actor&lt;sup&gt;&lt;a href=&#34;#myfootnote2&#34;&gt;2&lt;/a&gt;&lt;/sup&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-scala&#34;&gt;class UnitActor extends Actor {
+  override def receive: Receive = {
+    case Unit =&amp;gt; sender ! &amp;quot;Received Unit Object&amp;quot;
+    case () =&amp;gt; sender ! &amp;quot;Received Unit value&amp;quot;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This simply returns a string to the sender upon receipt of a message. When run on the same VM, everything behaves as expected:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-scala&#34;&gt;class NoSerializableTest extends TestKit(ActorSystem(&amp;quot;SerializableTest&amp;quot;)) with WordSpecLike with ImplicitSender {
+
+  &amp;quot;ActorSystem without requiring serialization&amp;quot; should {
+    val unitActor = TestActorRef[UnitActor]
+
+    &amp;quot;send Unit object&amp;quot; in {
+      unitActor ! Unit
+      within(1 second){
+        expectMsg(&amp;quot;Received Unit Object&amp;quot;)
+      }
+    }
+    &amp;quot;send unit value&amp;quot; in {
+      unitActor ! ()
+      within(1 second){
+        expectMsg(&amp;quot;Received Unit value&amp;quot;)
+      }
+    }
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;However, if the same actor was used in a distributed system, messages would have to be serialized and &lt;code&gt;Unit&lt;/code&gt; messages will not be sent across the wire.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-scala&#34;&gt;class SerializableTest extends TestKit(ActorSystem(&amp;quot;SerializableTest&amp;quot;, ConfigFactory.parseString(
+  &amp;quot;akka.actor.serialize-messages = on&amp;quot;))) with WordSpecLike with ImplicitSender {
+
+  &amp;quot;ActorSystem with serialization&amp;quot; should {
+    val unitActor = TestActorRef[UnitActor]
+
+    &amp;quot;fail to send Unit Object&amp;quot; in {
+      unitActor ! Unit
+      within(1 second){
+        expectNoMsg()
+      }
+    }
+    &amp;quot;send unit value&amp;quot; in {
+      unitActor ! ()
+      within(1 second){
+        expectMsg(&amp;quot;Received Unit value&amp;quot;)
+      }
+    }
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note that we have mimicked what would happen when messages are sent between VMs by setting &lt;code&gt;akka.actor.serialize-messages = on&lt;/code&gt;&lt;sup&gt;&lt;a href=&#34;#myfootnote3&#34;&gt;3&lt;/a&gt;&lt;/sup&gt;. Using the default java serializer, &lt;code&gt;()&lt;/code&gt; messages are sent without a problem, but &lt;code&gt;Unit&lt;/code&gt; messages are dropped with the following error being logged to STDOUT:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;[ERROR] [05/17/2015 14:37:30.959] [pool-6-thread-3-ScalaTest-running-SerializableTest] [akka://SerializableTest/user/$$a] swallowing exception during message send
+java.io.NotSerializableException: No configured serialization-bindings for class [scala.Unit$]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;Unit&lt;/code&gt; is just a regular companion object and plain objects are not serializable, only &lt;code&gt;case objects&lt;/code&gt; are.&lt;/p&gt;
+
+&lt;h1 id=&#34;take-aways:22b3ccc225764a0214716b110e2fce4d&#34;&gt;Take aways:&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Use &lt;code&gt;()&lt;/code&gt; as the &lt;code&gt;Unit&lt;/code&gt; value and not &lt;code&gt;Unit&lt;/code&gt; itself.&lt;/li&gt;
+&lt;li&gt;Turn on &lt;code&gt;serialize-messages&lt;/code&gt; when testing actor systems that will leave a single VM.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;footnotes:22b3ccc225764a0214716b110e2fce4d&#34;&gt;Footnotes:&lt;/h1&gt;
+
+&lt;p&gt;&lt;a name=&#34;myfootnote1&#34;&gt;1&lt;/a&gt;: Using the default java serializer. Other serializers&amp;rsquo; behavior is left as an exercise to the reader.&lt;br&gt;
+&lt;a name=&#34;myfootnote2&#34;&gt;2&lt;/a&gt;: Code for tests can be found &lt;a href=&#34;https://github.com/frosforever/akka-unit-messages&#34;&gt;https://github.com/frosforever/akka-unit-messages&lt;/a&gt;&lt;br&gt;
+&lt;a name=&#34;myfootnote3&#34;&gt;3&lt;/a&gt;: &lt;a href=&#34;http://doc.akka.io/docs/akka/snapshot/scala/serialization.html#Verification&#34;&gt;http://doc.akka.io/docs/akka/snapshot/scala/serialization.html#Verification&lt;/a&gt; &lt;br&gt;&lt;/p&gt;
 </description>
     </item>
     
