@@ -16,7 +16,7 @@ MetaDataFormat = "toml"
 
 [params]
     # Select a syntax highight.
-    highlight = "solarized_light"
+    highlight = "solarized_dark"
 
     # Tagline to display under the author name in the sidebar, keep it short.
     # You can use markdown here.
