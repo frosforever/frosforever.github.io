@@ -6,10 +6,6 @@ description: "Why one should favor () over Unit with Akka"
 categories: jekyll update
 ---
 
-SOMEHITNT here
-And then again
-One more time
-
 A common mistake in scala is using `Unit`, the companion object, as its value. The correct value of type `Unit` is `()`. Typically, one can get away with using `Unit` as the value, and
 
 {% highlight scala %}
@@ -18,7 +14,10 @@ def unitType: Unit = Unit
 def unitValue: Unit = ()
 {% endhighlight %}
 
-behave similarly. However, this becomes an issue when serialization<sup>[1](#myfootnote1)</sup> comes into play. Take, for example, the following actor<sup>[2](#myfootnote2)</sup>:
+behave similarly. However, this becomes an issue when serialization[^defaultserializer] comes into play. Take, for example, the following actor[^testcode]:
+
+[^defaultserializer]: Using the default java serializer. Other serializers' behavior is left as an exercise to the reader.
+[^testcode]: Code for tests can be found https://github.com/frosforever/akka-unit-messages
 
 {% highlight scala %}
 class UnitActor extends Actor {
@@ -78,7 +77,9 @@ class SerializableTest extends TestKit(ActorSystem("SerializableTest", ConfigFac
 }
 {% endhighlight %}
 
-Note that we have mimicked what would happen when messages are sent between VMs by setting `akka.actor.serialize-messages = on`<sup>[3](#myfootnote3)</sup>. Using the default java serializer, `()` messages are sent without a problem, but `Unit` messages are dropped with the following error being logged to STDOUT:
+Note that we have mimicked what would happen when messages are sent between VMs by setting `akka.actor.serialize-messages = on`[^akkasettings]. Using the default java serializer, `()` messages are sent without a problem, but `Unit` messages are dropped with the following error being logged to STDOUT:
+
+[^akkasettings]: http://doc.akka.io/docs/akka/snapshot/scala/serialization.html#Verification
 
 {% highlight scala %}
 [ERROR] [05/17/2015 14:37:30.959] [pool-6-thread-3-ScalaTest-running-SerializableTest] [akka://SerializableTest/user/$$a] swallowing exception during message send
@@ -91,8 +92,3 @@ java.io.NotSerializableException: No configured serialization-bindings for class
 # Take aways:
 * Use `()` as the `Unit` value and not `Unit` itself.
 * Turn on `serialize-messages` when testing actor systems that will leave a single VM.
-
-# Footnotes:
-<a name="myfootnote1">1</a>: Using the default java serializer. Other serializers' behavior is left as an exercise to the reader.<br>
-<a name="myfootnote2">2</a>: Code for tests can be found https://github.com/frosforever/akka-unit-messages<br>
-<a name="myfootnote3">3</a>: http://doc.akka.io/docs/akka/snapshot/scala/serialization.html#Verification <br>
