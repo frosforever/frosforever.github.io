@@ -3,7 +3,6 @@ layout: post
 title:  "Serialization of Unit in akka"
 date:   2015-05-18 17:49:00
 description: "Why one should favor () over Unit with Akka"
-categories: jekyll update
 ---
 
 A common mistake in scala is using `Unit`, the companion object, as its value. The correct value of type `Unit` is `()`. Typically, one can get away with using `Unit` as the value, and
