@@ -46,3 +46,5 @@ docker ps
 
 Unlike with `boot2docker` we do not know what the VM might be named to check if it's running. Instead we use `docker-machine ls` to find a running virtualbox VM and grab its name for future use. This can easily be extended to check if the virtualbox VM is simply not running and automatically boot it or even use a different docker-machine driver all together.
 
+You can find an example of this in action in the [source for this blog](https://github.com/frosforever/frosforever.github.io/blob/master/jekyll_docker.sh).
+
