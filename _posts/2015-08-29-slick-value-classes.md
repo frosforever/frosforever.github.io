@@ -157,3 +157,13 @@ which will treat it as a string in that query. Or you can bring in all the exten
 implicit def coffeeNameStringMethods(c: Rep[CoffeeName]): StringColumnExtensionMethods[CoffeeName] =
   new StringColumnExtensionMethods[CoffeeName](c)
 {% endhighlight %}
+
+# Update 2015/10/4
+
+You can extend a value class with `MappedType` to get the `MappedColumnType` methods for free via the magic of macros.
+That is,
+
+{% highlight scala %}
+case class CoffeeId(value: Int) extends AnyVal with MappedTo[Int]
+{% endhighlight %}
+is equivenlant to the two step process of creating `case class CoffeeId(id: Int)` and then the `implicit val coffeeIdColumnType = ...`. Note the change in property name from `id` to `value`. The macro needs there to be a specific `value` member that maps to the type, here an `Int`.
