@@ -25,4 +25,4 @@ See site at: http://$DOCKER_IP:4000
 
 ************************"
 
-docker run --rm -it --label=jekyll --label=pages --volume=`pwd`:/srv/jekyll -p 4000:4000 jekyll/pages jekyll serve --force_polling --drafts
+docker run --rm -it --label=jekyll --label=pages --volume=`pwd`:/srv/jekyll -p 4000:4000 jekyll/jekyll:pages jekyll serve --force_polling --drafts
