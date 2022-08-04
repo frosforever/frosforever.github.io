@@ -8,6 +8,7 @@ title: Thoughts and notes
 baseurl: "" # the subpath of your site, e.g. /blog/
 url: https://frosforever.github.io
 github_username:  frosforever
+repository: frosforever/frosforever.github.io
 
 # Build settings
 markdown: kramdown
