@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Divine Meditation Visualization</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 90%;
+      max-width: 800px;
+    }
+    
+    .toggle-buttons {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .speed-buttons {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .toggle-btn {
+      padding: 10px 20px;
+      background-color: #333;
+      color: #e0e0e0;
+      border: 1px solid #555;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: Georgia, serif;
+      transition: all 0.3s ease;
+    }
+    
+    .toggle-btn:hover {
+      background-color: #444;
+    }
+    
+    .toggle-btn.active {
+      background-color: #555;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+    
+    .meditation-title {
+      font-size: 24px;
+      color: #ffffff;
+      margin-bottom: 20px;
+      font-family: Georgia, serif;
+      text-align: center;
+    }
+    
+    .letters-container {
+      display: flex;
+      direction: rtl;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    
+    .letter {
+      width: 120px;
+      height: 140px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 100px;
+      font-family: "David", "Times New Roman", serif;
+      text-shadow: 0 0 8px currentColor;
+    }
+    
+    .guide-container {
+      width: 100%;
+      text-align: center;
+      font-size: 20px;
+      line-height: 1.4;
+      margin-top: 20px;
+      font-family: Georgia, serif;
+      min-height: 56px;
+    }
+    
+    .counter {
+      font-size: 14px;
+      color: #999;
+      margin-top: 30px;
+    }
+
+    @font-face {
+      font-family: 'David';
+      src: url('https://fonts.cdnfonts.com/css/david-libre');
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Toggle Buttons for Meditation Type -->
+    <div class="toggle-buttons">
+      <button id="nameBtn" class="toggle-btn active">Divine Name</button>
+      <button id="vowelBtn" class="toggle-btn">Divine Vowels</button>
+    </div>
+    
+    <!-- Toggle Buttons for Speed -->
+    <div class="speed-buttons">
+      <button id="slowBtn" class="toggle-btn active">Slow (7s)</button>
+      <button id="fastBtn" class="toggle-btn">Fast (1.5s)</button>
+    </div>
+    
+    <!-- Title -->
+    <h2 class="meditation-title" id="meditationTitle">The Divine Name</h2>
+    
+    <!-- Letters Display -->
+    <div class="letters-container" id="lettersContainer">
+      <!-- Letters will be inserted here by JavaScript -->
+    </div>
+    
+    <!-- Meditation Prompt -->
+    <div class="guide-container" id="meditationGuide"></div>
+    
+    <!-- Permutation Counter -->
+    <div class="counter" id="permutationCounter">1/12</div>
+  </div>
+
+  <script>
+    // State variables
+    let activeMeditation = 'name';
+    let speed = 'slow';
+    let currentPermutation = 0;
+    let permutationInterval;
+    
+    // Divine Name permutations and prompts
+    const namePermutations = [
+      { letters: ["י", "ה", "ו", "ה"], prompt: "Sense the threads of time that connect this moment to the past & future" },
+      { letters: ["י", "ה", "ו", "ה"], prompt: "Don't \"Be Here Now,\" be \"Then, Now, and Later\" all at once" },
+      { letters: ["י", "ו", "ה", "ה"], prompt: "Allow your thoughts to be aligned with your somatic sensations" },
+      { letters: ["ה", "י", "ה", "ו"], prompt: "Exhale your mind" },
+      { letters: ["ה", "ו", "ה", "י"], prompt: "Exhale your heart" },
+      { letters: ["ו", "ה", "י", "ה"], prompt: "Honor the ways you channel ideas into manifestation" },
+      { letters: ["ו", "ה", "ה", "י"], prompt: "Let the body lead the mind" },
+      { letters: ["ה", "ו", "ה", "י"], prompt: "What new spiritual energies does this alignment awaken?" },
+      { letters: ["ה", "ו", "י", "ה"], prompt: "Unite the masculine & feminine energies within you" },
+      { letters: ["י", "ה", "ה", "ו"], prompt: "Breathe in pure liberation" },
+      { letters: ["ה", "י", "ו", "ה"], prompt: "Hold your breath, noticing the flutters of stillness that are the living soul" },
+      { letters: ["ו", "ה", "י", "ה"], prompt: "Draw down your consciousness to where your body touches the earth" }
+    ];
+    
+    // Divine Vowels permutations and prompts
+    const vowelPermutations = [
+      { letters: ["א", "ה", "ו", "י"], prompt: "Enter the primordial silence from which all sounds emerge" },
+      { letters: ["א", "ו", "ה", "י"], prompt: "Allow the vowels to vibrate through your body as pure energy" },
+      { letters: ["א", "ה", "ה", "י"], prompt: "Feel how each vowel shapes the breath into living form" },
+      { letters: ["א", "ו", "ה", "י"], prompt: "Sense the doorway between existence and non-existence" },
+      { letters: ["ה", "ו", "א", "י"], prompt: "Let the vowels dissolve the boundaries of your perception" },
+      { letters: ["ה", "י", "ו", "א"], prompt: "Experience the space between thoughts as infinite potential" },
+      { letters: ["ה", "ו", "י", "א"], prompt: "Notice how sound and silence dance together in creation" },
+      { letters: ["ה", "י", "ה", "א"], prompt: "Allow these primal sounds to realign your energetic body" },
+      { letters: ["ו", "ה", "י", "א"], prompt: "Feel the ancient resonance awakening dormant awareness" },
+      { letters: ["ו", "ה", "א", "י"], prompt: "Breathe through the vowels as gateways to expanded consciousness" },
+      { letters: ["ו", "י", "א", "ה"], prompt: "Let each vowel illuminate a different chamber of your heart" },
+      { letters: ["ו", "י", "ה", "א"], prompt: "Experience yourself as a vessel for divine vibration" }
+    ];
+    
+    // Color mappings for Divine Name
+    const nameColors = {
+      "י": "#FFFFFF", // Yud - white
+      "ה": "#E8B4B8", // First Hey - rose gold
+      "ו": "#B4C5E8", // Vav - silver blue
+      "הFinal": "#BB4255" // Final Hey - deep rose
+    };
+    
+    // Color mappings for Divine Vowels
+    const vowelColors = {
+      "א": "#D4AF37", // Aleph - gold
+      "ה": "#C0C0C0", // Hey - silver
+      "ו": "#B8860B", // Vav - dark gold
+      "י": "#E6BE8A"  // Yud - pale gold
+    };
+    
+    // DOM elements
+    const nameBtn = document.getElementById('nameBtn');
+    const vowelBtn = document.getElementById('vowelBtn');
+    const slowBtn = document.getElementById('slowBtn');
+    const fastBtn = document.getElementById('fastBtn');
+    const meditationTitle = document.getElementById('meditationTitle');
+    const lettersContainer = document.getElementById('lettersContainer');
+    const meditationGuide = document.getElementById('meditationGuide');
+    const permutationCounter = document.getElementById('permutationCounter');
+    
+    // Helper function to get letter color
+    function getLetterColor(letter, index, letterArray) {
+      if (activeMeditation === 'name' && letter === 'ה') {
+        // For Divine Name, differentiate between first and final Hey
+        const heyCount = letterArray.slice(0, index + 1).filter(l => l === 'ה').length;
+        return heyCount === 1 ? nameColors['ה'] : nameColors['הFinal']; 
+      }
+      return activeMeditation === 'name' ? nameColors[letter] : vowelColors[letter];
+    }
+    
+    // Update the display with current permutation
+    function updateDisplay() {
+      const permutations = activeMeditation === 'name' ? namePermutations : vowelPermutations;
+      const currentLetters = permutations[currentPermutation].letters;
+      
+      // Clear previous letters
+      lettersContainer.innerHTML = '';
+      
+      // Add new letters
+      currentLetters.forEach((letter, index) => {
+        const letterElement = document.createElement('div');
+        letterElement.className = 'letter';
+        letterElement.textContent = letter;
+        letterElement.style.color = getLetterColor(letter, index, currentLetters);
+        letterElement.style.textShadow = `0 0 8px ${getLetterColor(letter, index, currentLetters)}`;
+        lettersContainer.appendChild(letterElement);
+      });
+      
+      // Update meditation guide if in slow mode
+      if (speed === 'slow') {
+        meditationGuide.textContent = permutations[currentPermutation].prompt;
+      } else {
+        meditationGuide.textContent = '';
+      }
+      
+      // Update counter
+      permutationCounter.textContent = `${currentPermutation + 1}/12`;
+    }
+    
+    // Start the permutation cycle
+    function startPermutationCycle() {
+      // Clear any existing interval
+      if (permutationInterval) {
+        clearInterval(permutationInterval);
+      }
+      
+      // Set the interval based on speed
+      const intervalTime = speed === 'slow' ? 7000 : 1500;
+      permutationInterval = setInterval(() => {
+        currentPermutation = (currentPermutation + 1) % 12;
+        updateDisplay();
+      }, intervalTime);
+    }
+    
+    // Event listeners for meditation type buttons
+    nameBtn.addEventListener('click', () => {
+      activeMeditation = 'name';
+      nameBtn.classList.add('active');
+      vowelBtn.classList.remove('active');
+      meditationTitle.textContent = 'The Divine Name';
+      currentPermutation = 0;
+      updateDisplay();
+      startPermutationCycle();
+    });
+    
+    vowelBtn.addEventListener('click', () => {
+      activeMeditation = 'vowel';
+      vowelBtn.classList.add('active');
+      nameBtn.classList.remove('active');
+      meditationTitle.textContent = 'The Divine Vowels';
+      currentPermutation = 0;
+      updateDisplay();
+      startPermutationCycle();
+    });
+    
+    // Event listeners for speed buttons
+    slowBtn.addEventListener('click', () => {
+      speed = 'slow';
+      slowBtn.classList.add('active');
+      fastBtn.classList.remove('active');
+      updateDisplay();
+      startPermutationCycle();
+    });
+    
+    fastBtn.addEventListener('click', () => {
+      speed = 'fast';
+      fastBtn.classList.add('active');
+      slowBtn.classList.remove('active');
+      updateDisplay();
+      startPermutationCycle();
+    });
+    
+    // Initialize the display
+    updateDisplay();
+    startPermutationCycle();
+  </script>
+</body>
+</html>
